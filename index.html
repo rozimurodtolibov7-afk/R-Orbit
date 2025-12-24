@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>R-Orbit: Gravity Escape</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; }
+        #ui {
+            position: absolute; top: 20px; width: 100%; text-align: center;
+            color: #00f3ff; font-size: 24px; font-weight: bold; pointer-events: none;
+            text-shadow: 0 0 10px #00f3ff;
+        }
+        #msg {
+            position: absolute; top: 50%; width: 100%; text-align: center;
+            color: #fff; font-size: 18px; transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">SCORE: <span id="score">0</span></div>
+    <div id="msg">HOLD TO FLY OUT, RELEASE TO PULL IN</div>
+    <canvas id="game"></canvas>
+
+<script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let gameActive = true;
+    let isPressing = false;
+
+    // Koptok (O'yinchi)
+    const player = {
+        angle: 0,
+        distance: 80,
+        radius: 10,
+        speed: 0.05
+    };
+
+    const obstacles = [];
+    const center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    // Boshqaruv
+    window.addEventListener("mousedown", () => { isPressing = true; document.getElementById("msg").style.opacity = 0; });
+    window.addEventListener("mouseup", () => isPressing = false);
+    window.addEventListener("touchstart", (e) => { isPressing = true; e.preventDefault(); document.getElementById("msg").style.opacity = 0; });
+    window.addEventListener("touchend", () => isPressing = false);
+
+    function createObstacle() {
+        const side = Math.random() > 0.5 ? 1 : -1;
+        const radius = Math.random() * 15 + 10;
+        const dist = side === 1 ? canvas.width : 0;
+        
+        obstacles.push({
+            x: Math.random() * canvas.width,
+            y: side === 1 ? -50 : canvas.height + 50,
+            vx: (Math.random() - 0.5) * 4,
+            vy: side === 1 ? Math.random() * 3 + 2 : -(Math.random() * 3 + 2),
+            radius: radius,
+            color: "#ff0055"
+        });
+    }
+
+    setInterval(() => { if(gameActive) createObstacle(); }, 800);
+
+    function update() {
+        if (!gameActive) return;
+
+        // O'yinchi harakati
+        player.angle += player.speed;
+        
+        if (isPressing) {
+            player.distance += 4; // Tashqariga uchish
+        } else {
+            player.distance -= 3; // Markazga tortilish
+        }
+
+        // Chegaralar
+        if (player.distance < 40) player.distance = 40; // Markazga juda yaqin
+        if (player.distance > canvas.width / 2) { // Juda uzoqqa ketib qolish
+            gameOver();
+        }
+
+        const px = center.x + Math.cos(player.angle) * player.distance;
+        const py = center.y + Math.sin(player.angle) * player.distance;
+
+        // Kometalar harakati
+        obstacles.forEach((ob, index) => {
+            ob.x += ob.vx;
+            ob.y += ob.vy;
+
+            // To'qnashuvni tekshirish
+            const dx = px - ob.x;
+            const dy = py - ob.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < player.radius + ob.radius) {
+                gameOver();
+            }
+
+            // Ekrandan chiqib ketganlarni o'chirish
+            if (ob.y > canvas.height + 100 || ob.y < -100) {
+                obstacles.splice(index, 1);
+                score++;
+                scoreEl.innerText = score;
+            }
+        });
+    }
+
+    function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // "Motion blur" effekti
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Markaziy Qora Tuynuk
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, 35, 0, Math.PI * 2);
+        ctx.shadowBlur = 20; ctx.shadowColor = "#7000ff";
+        ctx.fillStyle = "#1a0033"; ctx.fill();
+        ctx.strokeStyle = "#7000ff"; ctx.lineWidth = 2; ctx.stroke();
+
+        // O'yinchi (Sayyora)
+        const px = center.x + Math.cos(player.angle) * player.distance;
+        const py = center.y + Math.sin(player.angle) * player.distance;
+
+        ctx.beginPath();
+        ctx.arc(px, py, player.radius, 0, Math.PI * 2);
+        ctx.shadowBlur = 15; ctx.shadowColor = "#00f3ff";
+        ctx.fillStyle = "#00f3ff"; ctx.fill();
+
+        // To'siqlar
+        obstacles.forEach(ob => {
+            ctx.beginPath();
+            ctx.arc(ob.x, ob.y, ob.radius, 0, Math.PI * 2);
+            ctx.shadowBlur = 10; ctx.shadowColor = ob.color;
+            ctx.fillStyle = ob.color; ctx.fill();
+        });
+
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(() => {
+            update();
+            draw();
+        });
+    }
+
+    function gameOver() {
+        gameActive = false;
+        alert("GAME OVER! Your Galaxy Score: " + score);
+        location.reload();
+    }
+
+    draw();
+</script>
+</body>
+</html>
