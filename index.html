@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -16,122 +16,12 @@
             position: absolute; top: 50%; width: 100%; text-align: center;
             color: #fff; font-size: 18px; transform: translateY(-50%);
         }
-        .menu-bar {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 10px; z-index: 100;
-        }
-        .menu-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: 2px solid #fff; color: #fff; padding: 10px 20px;
-            border-radius: 10px; font-size: 14px; font-weight: bold;
-            cursor: pointer; transition: all 0.3s;
-        }
-        .menu-btn:active { transform: scale(0.95); }
-        .menu-btn.shop { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .menu-btn.ref { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .menu-btn.sound { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        .modal.active { display: flex; }
-        
-        .modal-content {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            border: 3px solid #00f3ff; border-radius: 20px; padding: 25px;
-            max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto;
-        }
-        
-        .modal-header {
-            font-size: 24px; color: #00f3ff; text-align: center; 
-            margin-bottom: 20px; font-weight: bold;
-        }
-        
-        .shop-item {
-            background: rgba(0,0,0,0.4); border: 2px solid #667eea;
-            border-radius: 10px; padding: 15px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        
-        .shop-item h3 { color: #fff; font-size: 16px; margin: 0 0 5px 0; }
-        .shop-item p { color: #aaa; font-size: 12px; margin: 0; }
-        
-        .buy-btn {
-            background: #00f3ff; color: #000; padding: 8px 15px;
-            border: none; border-radius: 8px; font-weight: bold;
-            cursor: pointer; font-size: 12px;
-        }
-        .buy-btn.owned { background: #4ade80; }
-        
-        .close-btn {
-            background: #ff0055; color: #fff; padding: 12px;
-            border: none; border-radius: 10px; font-weight: bold;
-            cursor: pointer; width: 100%; margin-top: 15px;
-        }
-        
-        .ref-code {
-            background: rgba(0,0,0,0.5); border: 2px dashed #00f3ff;
-            padding: 15px; border-radius: 10px; text-align: center; margin: 15px 0;
-        }
-        
-        .ref-code code {
-            color: #00f3ff; font-size: 20px; font-weight: bold; letter-spacing: 2px;
-        }
-        
-        .ref-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff; padding: 12px; border: none; border-radius: 10px;
-            font-weight: bold; cursor: pointer; width: 100%;
-        }
-        
-        .coin-display {
-            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-            color: #ffd700; font-size: 18px; font-weight: bold;
-            text-shadow: 0 0 10px #ffd700; pointer-events: none;
-        }
     </style>
 </head>
 <body>
     <div id="ui">SCORE: <span id="score">0</span></div>
-    <div class="coin-display">💰 COINS: <span id="coins">0</span></div>
     <div id="msg">HOLD TO FLY OUT, RELEASE TO PULL IN</div>
     <canvas id="game"></canvas>
-    
-    <div class="menu-bar">
-        <button class="menu-btn shop" onclick="openShop()">🛒 SHOP</button>
-        <button class="menu-btn ref" onclick="openReferal()">👥 REFERAL</button>
-        <button class="menu-btn sound" id="soundBtn" onclick="toggleSound()">🔊 SOUND</button>
-    </div>
-    
-    <!-- Shop Modal -->
-    <div id="shopModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">🛒 SHOP</div>
-            <p style="text-align: center; color: #aaa; margin-bottom: 15px;">
-                Balance: <span style="color: #ffd700;" id="shopCoins">0</span> 💰
-            </p>
-            <div id="shopItems"></div>
-            <button class="close-btn" onclick="closeShop()">CLOSE</button>
-        </div>
-    </div>
-    
-    <!-- Referal Modal -->
-    <div id="refModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">👥 REFERAL</div>
-            <p style="text-align: center; color: #aaa; margin-bottom: 15px;">
-                Invite friends and earn 100 coins each!
-            </p>
-            <div class="ref-code">
-                <div style="color: #888; margin-bottom: 8px;">Your Code:</div>
-                <code id="refCode">SPACE2024</code>
-            </div>
-            <button class="ref-btn" onclick="shareReferal()">📱 SHARE ON TELEGRAM</button>
-            <button class="close-btn" onclick="closeReferal()">CLOSE</button>
-        </div>
-    </div>
 
 <script>
     const canvas = document.getElementById("game");
@@ -142,94 +32,36 @@
     canvas.height = window.innerHeight;
 
     let score = 0;
-    let coins = parseInt(localStorage.getItem('coins') || '0');
     let gameActive = true;
     let isPressing = false;
 
-    document.getElementById('coins').innerText = coins;
-
-    // Audio
-    let audioContext;
-    let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
-    
-    function initAudio() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
-    
-    function playSound(freq, duration) {
-        if (!soundEnabled || !audioContext) return;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        osc.start();
-        osc.stop(audioContext.currentTime + duration);
-    }
-    
-    function toggleSound() {
-        soundEnabled = !soundEnabled;
-        localStorage.setItem('soundEnabled', soundEnabled);
-        document.getElementById('soundBtn').innerText = soundEnabled ? '🔊 SOUND' : '🔇 MUTED';
-    }
-    
-    document.getElementById('soundBtn').innerText = soundEnabled ? '🔊 SOUND' : '🔇 MUTED';
-
-    // Shop Data
-    const shopData = [
-        { id: 'shield', name: '🛡️ Shield', price: 500, desc: 'One-time protection', owned: false },
-        { id: 'speed', name: '⚡ Speed Boost', price: 300, desc: '+20% speed', owned: false },
-        { id: 'skin', name: '🌈 Rainbow Skin', price: 1000, desc: 'Rainbow effect', owned: false }
-    ];
-
-    const savedShop = localStorage.getItem('shop');
-    if (savedShop) {
-        JSON.parse(savedShop).forEach(id => {
-            const item = shopData.find(i => i.id === id);
-            if (item) item.owned = true;
-        });
-    }
-
+    // Koptok (O'yinchi)
     const player = {
         angle: 0,
         distance: 80,
         radius: 10,
-        speed: 0.05,
-        hasShield: shopData.find(i => i.id === 'shield' && i.owned) ? true : false
+        speed: 0.05
     };
 
     const obstacles = [];
     const center = { x: canvas.width / 2, y: canvas.height / 2 };
 
-    // Controls
-    window.addEventListener("mousedown", () => { 
-        isPressing = true; 
-        document.getElementById("msg").style.opacity = 0;
-        initAudio();
-    });
+    // Boshqaruv
+    window.addEventListener("mousedown", () => { isPressing = true; document.getElementById("msg").style.opacity = 0; });
     window.addEventListener("mouseup", () => isPressing = false);
-    window.addEventListener("touchstart", (e) => { 
-        isPressing = true; 
-        e.preventDefault(); 
-        document.getElementById("msg").style.opacity = 0;
-        initAudio();
-    });
+    window.addEventListener("touchstart", (e) => { isPressing = true; e.preventDefault(); document.getElementById("msg").style.opacity = 0; });
     window.addEventListener("touchend", () => isPressing = false);
 
     function createObstacle() {
         const side = Math.random() > 0.5 ? 1 : -1;
         const radius = Math.random() * 15 + 10;
-        const speedBoost = shopData.find(i => i.id === 'speed' && i.owned) ? 1.2 : 1;
+        const dist = side === 1 ? canvas.width : 0;
         
         obstacles.push({
             x: Math.random() * canvas.width,
             y: side === 1 ? -50 : canvas.height + 50,
             vx: (Math.random() - 0.5) * 4,
-            vy: side === 1 ? (Math.random() * 3 + 2) * speedBoost : -(Math.random() * 3 + 2) * speedBoost,
+            vy: side === 1 ? Math.random() * 3 + 2 : -(Math.random() * 3 + 2),
             radius: radius,
             color: "#ff0055"
         });
@@ -240,90 +72,68 @@
     function update() {
         if (!gameActive) return;
 
+        // O'yinchi harakati
         player.angle += player.speed;
         
         if (isPressing) {
-            player.distance += 4;
+            player.distance += 4; // Tashqariga uchish
         } else {
-            player.distance -= 3;
+            player.distance -= 3; // Markazga tortilish
         }
 
-        if (player.distance < 40) player.distance = 40;
-        if (player.distance > canvas.width / 2) {
+        // Chegaralar
+        if (player.distance < 40) player.distance = 40; // Markazga juda yaqin
+        if (player.distance > canvas.width / 2) { // Juda uzoqqa ketib qolish
             gameOver();
         }
 
         const px = center.x + Math.cos(player.angle) * player.distance;
         const py = center.y + Math.sin(player.angle) * player.distance;
 
+        // Kometalar harakati
         obstacles.forEach((ob, index) => {
             ob.x += ob.vx;
             ob.y += ob.vy;
 
+            // To'qnashuvni tekshirish
             const dx = px - ob.x;
             const dy = py - ob.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < player.radius + ob.radius) {
-                if (player.hasShield) {
-                    player.hasShield = false;
-                    obstacles.splice(index, 1);
-                    playSound(600, 0.15);
-                    return;
-                }
                 gameOver();
             }
 
+            // Ekrandan chiqib ketganlarni o'chirish
             if (ob.y > canvas.height + 100 || ob.y < -100) {
                 obstacles.splice(index, 1);
                 score++;
                 scoreEl.innerText = score;
-                playSound(800, 0.1);
             }
         });
     }
 
     function draw() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // "Motion blur" effekti
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Black hole
+        // Markaziy Qora Tuynuk
         ctx.beginPath();
         ctx.arc(center.x, center.y, 35, 0, Math.PI * 2);
         ctx.shadowBlur = 20; ctx.shadowColor = "#7000ff";
         ctx.fillStyle = "#1a0033"; ctx.fill();
         ctx.strokeStyle = "#7000ff"; ctx.lineWidth = 2; ctx.stroke();
 
-        // Player
+        // O'yinchi (Sayyora)
         const px = center.x + Math.cos(player.angle) * player.distance;
         const py = center.y + Math.sin(player.angle) * player.distance;
 
-        const hasRainbow = shopData.find(i => i.id === 'skin' && i.owned);
-        
         ctx.beginPath();
         ctx.arc(px, py, player.radius, 0, Math.PI * 2);
-        ctx.shadowBlur = 15;
-        
-        if (hasRainbow) {
-            const hue = (Date.now() * 0.2) % 360;
-            ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
-            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-        } else {
-            ctx.shadowColor = "#00f3ff";
-            ctx.fillStyle = "#00f3ff";
-        }
-        ctx.fill();
+        ctx.shadowBlur = 15; ctx.shadowColor = "#00f3ff";
+        ctx.fillStyle = "#00f3ff"; ctx.fill();
 
-        // Shield
-        if (player.hasShield) {
-            ctx.beginPath();
-            ctx.arc(px, py, player.radius + 8, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
-
-        // Obstacles
+        // To'siqlar
         obstacles.forEach(ob => {
             ctx.beginPath();
             ctx.arc(ob.x, ob.y, ob.radius, 0, Math.PI * 2);
@@ -340,94 +150,8 @@
 
     function gameOver() {
         gameActive = false;
-        playSound(300, 0.5);
-        
-        const earnedCoins = Math.floor(score / 2);
-        coins += earnedCoins;
-        localStorage.setItem('coins', coins);
-        
-        setTimeout(() => {
-            alert(`GAME OVER! 
-            
-Score: ${score}
-Earned: ${earnedCoins} coins 💰
-Total Coins: ${coins}
-
-Play again?`);
-            location.reload();
-        }, 100);
-    }
-
-    // Shop
-    function openShop() {
-        document.getElementById('shopCoins').innerText = coins;
-        const container = document.getElementById('shopItems');
-        container.innerHTML = '';
-        
-        shopData.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'shop-item';
-            div.innerHTML = `
-                <div>
-                    <h3>${item.name}</h3>
-                    <p>${item.desc}</p>
-                </div>
-                <button class="buy-btn ${item.owned ? 'owned' : ''}" 
-                        onclick="buyItem('${item.id}')"
-                        ${item.owned ? 'disabled' : ''}>
-                    ${item.owned ? '✓ OWNED' : item.price + ' 💰'}
-                </button>
-            `;
-            container.appendChild(div);
-        });
-        
-        document.getElementById('shopModal').classList.add('active');
-    }
-
-    function closeShop() {
-        document.getElementById('shopModal').classList.remove('active');
-    }
-
-    function buyItem(id) {
-        const item = shopData.find(i => i.id === id);
-        if (!item || item.owned) return;
-        
-        if (coins >= item.price) {
-            coins -= item.price;
-            item.owned = true;
-            
-            if (id === 'shield') player.hasShield = true;
-            
-            localStorage.setItem('coins', coins);
-            localStorage.setItem('shop', JSON.stringify(shopData.filter(i => i.owned).map(i => i.id)));
-            
-            document.getElementById('coins').innerText = coins;
-            playSound(1000, 0.2);
-            openShop();
-        } else {
-            alert('Not enough coins!');
-        }
-    }
-
-    // Referal
-    function openReferal() {
-        document.getElementById('refModal').classList.add('active');
-    }
-
-    function closeReferal() {
-        document.getElementById('refModal').classList.remove('active');
-    }
-
-    function shareReferal() {
-        const botUrl = 'http://t.me/assistantAI_super_bot';
-        const refCode = document.getElementById('refCode').innerText;
-        const text = `🚀 Join Orbit: Gravity Escape!
-
-Use my code: ${refCode}
-Get bonus coins! 💰`;
-        
-        const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(botUrl)}&text=${encodeURIComponent(text)}`;
-        window.open(telegramUrl, '_blank');
+        alert("GAME OVER! Your Galaxy Score: " + score);
+        location.reload();
     }
 
     draw();
