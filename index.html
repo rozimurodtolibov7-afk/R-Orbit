@@ -1,160 +1,891 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Orbit: Gravity Escape</title>
-    <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { display: block; }
-        #ui {
-            position: absolute; top: 20px; width: 100%; text-align: center;
-            color: #00f3ff; font-size: 24px; font-weight: bold; pointer-events: none;
-            text-shadow: 0 0 10px #00f3ff;
-        }
-        #msg {
-            position: absolute; top: 50%; width: 100%; text-align: center;
-            color: #fff; font-size: 18px; transform: translateY(-50%);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ORBIT: Gravity Escape</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;}
+canvas{position:fixed;top:0;left:0;display:block;}
+
+/* ─── LANG SCREEN ─── */
+#langScr{
+  position:fixed;inset:0;z-index:900;
+  background:radial-gradient(ellipse at 50% 45%,#0c0025 0%,#020008 60%,#000 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.logo-wrap{margin-bottom:6px;text-align:center;}
+.logo-main{
+  font-family:'Orbitron',monospace;font-size:clamp(2.4rem,9vw,3.8rem);font-weight:900;
+  letter-spacing:8px;color:#00f3ff;
+  text-shadow:0 0 30px #00f3ff,0 0 70px rgba(0,243,255,.4);
+  animation:logoBlink 2.5s ease-in-out infinite alternate;
+  display:block;
+}
+.logo-sub{
+  font-family:'Exo 2',sans-serif;font-size:clamp(.7rem,2.5vw,.85rem);
+  letter-spacing:8px;color:rgba(0,243,255,.45);text-transform:uppercase;
+  display:block;margin-top:4px;
+}
+@keyframes logoBlink{
+  from{text-shadow:0 0 20px #00f3ff,0 0 40px rgba(0,243,255,.3);}
+  to{text-shadow:0 0 50px #00f3ff,0 0 100px rgba(0,243,255,.6),0 0 160px rgba(0,243,255,.15);}
+}
+.lang-label{
+  font-family:'Exo 2',sans-serif;font-size:.65rem;letter-spacing:5px;
+  color:rgba(255,255,255,.3);text-transform:uppercase;margin:44px 0 18px;
+}
+.lang-row{display:flex;gap:14px;}
+.lang-btn{
+  background:rgba(0,243,255,.06);border:1px solid rgba(0,243,255,.22);
+  color:rgba(200,245,255,.9);padding:15px 24px;font-family:'Orbitron',monospace;
+  font-size:.82rem;font-weight:700;letter-spacing:2px;cursor:pointer;
+  transition:all .22s;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;min-width:86px;
+}
+.lang-flag{font-size:1.65rem;line-height:1.1;}
+.lang-btn:hover,.lang-btn:active{
+  border-color:#00f3ff;color:#00f3ff;
+  background:rgba(0,243,255,.13);
+  box-shadow:0 0 22px rgba(0,243,255,.25);
+  transform:translateY(-4px) scale(1.05);
+}
+
+/* ─── HUD ─── */
+#hud{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:none;justify-content:space-between;align-items:flex-start;
+  padding:14px 16px 0;pointer-events:none;
+}
+.hud-score-box{pointer-events:none;}
+.hud-lbl{
+  font-family:'Exo 2',sans-serif;font-size:.6rem;letter-spacing:5px;
+  color:rgba(0,243,255,.5);text-transform:uppercase;
+}
+.hud-num{
+  font-family:'Orbitron',monospace;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;
+  color:#00f3ff;text-shadow:0 0 14px #00f3ff;letter-spacing:2px;line-height:1.1;
+}
+.hud-right{display:flex;gap:7px;pointer-events:all;}
+.hud-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.4);font-size:.58rem;font-weight:800;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',monospace;letter-spacing:0;
+}
+.hud-btn:hover{border-color:#00f3ff;color:#00f3ff;}
+.hud-btn.on{border-color:rgba(0,243,255,.6);color:#00f3ff;background:rgba(0,243,255,.1);box-shadow:0 0 10px rgba(0,243,255,.25);}
+
+/* ─── OVERLAYS ─── */
+.panel{
+  position:fixed;inset:0;z-index:800;
+  background:rgba(0,0,8,.93);backdrop-filter:blur(10px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;
+}
+.panel.vis{display:flex;animation:panelIn .3s ease;}
+@keyframes panelIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+.panel-title{
+  font-family:'Orbitron',monospace;font-size:clamp(1.5rem,6vw,2.5rem);
+  font-weight:900;letter-spacing:5px;text-align:center;margin-bottom:10px;
+}
+.panel-title.cyan{color:#00f3ff;text-shadow:0 0 30px #00f3ff;}
+.panel-title.red{color:#ff2244;text-shadow:0 0 30px #ff2244;}
+.panel-title.gold{color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.5);}
+.panel-sub{
+  font-family:'Exo 2',sans-serif;font-size:.72rem;letter-spacing:6px;
+  color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:36px;
+}
+.panel-score{
+  font-family:'Orbitron',monospace;font-size:clamp(1rem,4vw,1.6rem);
+  font-weight:700;color:#ffd700;text-shadow:0 0 18px rgba(255,215,0,.5);
+  margin-bottom:6px;
+}
+.panel-best{
+  font-family:'Exo 2',sans-serif;font-size:.75rem;letter-spacing:4px;
+  color:rgba(255,215,0,.4);margin-bottom:36px;text-transform:uppercase;
+}
+.action-btn{
+  background:rgba(0,243,255,.09);border:1px solid rgba(0,243,255,.45);
+  color:#00f3ff;padding:14px 42px;font-family:'Orbitron',monospace;
+  font-size:.82rem;font-weight:700;letter-spacing:3px;cursor:pointer;
+  border-radius:8px;transition:all .22s;margin:6px;text-transform:uppercase;
+}
+.action-btn:hover{background:rgba(0,243,255,.2);box-shadow:0 0 22px rgba(0,243,255,.3);transform:scale(1.03);}
+.action-btn.dim{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.45);}
+.action-btn.dim:hover{border-color:rgba(255,255,255,.45);color:#fff;}
+
+/* ─── HINT ─── */
+#hint{
+  position:fixed;bottom:28px;left:0;right:0;text-align:center;z-index:210;
+  font-family:'Exo 2',sans-serif;font-size:.68rem;letter-spacing:3px;
+  color:rgba(255,255,255,.4);text-transform:uppercase;
+  pointer-events:none;transition:opacity .6s;
+}
+</style>
 </head>
 <body>
-    <div id="ui">SCORE: <span id="score">0</span></div>
-    <div id="msg">HOLD TO FLY OUT, RELEASE TO PULL IN</div>
-    <canvas id="game"></canvas>
+<canvas id="gc"></canvas>
+
+<!-- LANG -->
+<div id="langScr">
+  <div class="logo-wrap">
+    <span class="logo-main">ORBIT</span>
+    <span class="logo-sub">Gravity Escape</span>
+  </div>
+  <div class="lang-label">Select Language / Tilni tanlang / &#1042;&#1099;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1103;&#1079;&#1099;&#1082;</div>
+  <div class="lang-row">
+    <button class="lang-btn" onclick="pickLang('uz')"><span class="lang-flag">&#127482;&#127487;</span>UZ</button>
+    <button class="lang-btn" onclick="pickLang('ru')"><span class="lang-flag">&#127479;&#127482;</span>RU</button>
+    <button class="lang-btn" onclick="pickLang('en')"><span class="lang-flag">&#127468;&#127463;</span>EN</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-score-box">
+    <div class="hud-lbl" id="hudLbl">SCORE</div>
+    <div class="hud-num" id="hudNum">0</div>
+  </div>
+  <div class="hud-right">
+    <button class="hud-btn on" id="btnMus" onclick="toggleMus()">MUS</button>
+    <button class="hud-btn on" id="btnSfx" onclick="toggleSfx()">SFX</button>
+    <button class="hud-btn" id="btnLang" onclick="goLang()">&#127760;</button>
+  </div>
+</div>
+
+<!-- HINT -->
+<div id="hint" style="opacity:0"></div>
+
+<!-- START PANEL -->
+<div id="startPanel" class="panel vis">
+  <div class="panel-title cyan">ORBIT</div>
+  <div class="panel-sub" id="st_sub">GRAVITY ESCAPE</div>
+  <div class="panel-best" id="st_best"></div>
+  <button class="action-btn" onclick="startGame()" id="st_play">PLAY</button>
+  <button class="action-btn dim" onclick="goLang()" id="st_lang">LANGUAGE</button>
+</div>
+
+<!-- GAMEOVER PANEL -->
+<div id="goPanel" class="panel">
+  <div class="panel-title red" id="go_title">GAME OVER</div>
+  <div class="panel-sub" id="go_sub">YOU ESCAPED THE ORBIT</div>
+  <div class="panel-score" id="go_score"></div>
+  <div class="panel-best" id="go_best"></div>
+  <button class="action-btn" onclick="restartGame()" id="go_restart">PLAY AGAIN</button>
+  <button class="action-btn dim" onclick="goLang()" id="go_lang">LANGUAGE</button>
+</div>
 
 <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const scoreEl = document.getElementById("score");
+// ════════════════════════════════════════
+//  TRANSLATIONS
+// ════════════════════════════════════════
+var LANG = {
+  uz:{
+    lbl:'BALL',
+    hint:'BOSIB USHLA \u2192 Tashqariga | QO\u02BCY \u2192 Ichkariga',
+    st_sub:'GRAVITATSIYA O\u02BCYINI',
+    st_best:'ENG YAXSHI: ',
+    st_play:'O\u02BCYNASH',
+    st_lang:'TIL',
+    go_title:'YUTQAZDINGIZ!',
+    go_sub:'CHEGARA OSHIRILDI',
+    go_score:'BALL: ',
+    go_best:'ENG YAXSHI: ',
+    go_restart:'QAYTA O\u02BCYNASH',
+    go_lang:'TIL'
+  },
+  ru:{
+    lbl:'\u0411\u0410\u041b\u041b\u042b',
+    hint:'\u0417\u0410\u0416\u041c\u0418 \u2192 \u0414\u0430\u043b\u044c\u0448\u0435 | \u041e\u0422\u041f\u0423\u0421\u0422\u0418 \u2192 \u0411\u043b\u0438\u0436\u0435',
+    st_sub:'\u0418\u0413\u0420\u0410 \u0413\u0420\u0410\u0412\u0418\u0422\u0410\u0426\u0418\u0418',
+    st_best:'\u041b\u0423\u0427\u0428\u0418\u0419: ',
+    st_play:'\u0418\u0413\u0420\u0410\u0422\u042c',
+    st_lang:'\u042f\u0417\u042b\u041a',
+    go_title:'\u041f\u0420\u041e\u0418\u0413\u0420\u0410\u041b!',
+    go_sub:'\u0412\u042b\u041b\u0415\u0422\u0415\u041b \u0417\u0410 \u0413\u0420\u0410\u041d\u0418\u0426\u0423',
+    go_score:'\u0421\u0427\u0401\u0422: ',
+    go_best:'\u041b\u0423\u0427\u0428\u0418\u0419: ',
+    go_restart:'\u0421\u041d\u041e\u0412\u0410',
+    go_lang:'\u042f\u0417\u042b\u041a'
+  },
+  en:{
+    lbl:'SCORE',
+    hint:'HOLD \u2192 Fly Out  \u2502  RELEASE \u2192 Pull In',
+    st_sub:'GRAVITY ESCAPE',
+    st_best:'BEST: ',
+    st_play:'PLAY',
+    st_lang:'LANGUAGE',
+    go_title:'GAME OVER',
+    go_sub:'YOU LEFT THE ORBIT',
+    go_score:'SCORE: ',
+    go_best:'BEST: ',
+    go_restart:'PLAY AGAIN',
+    go_lang:'LANGUAGE'
+  }
+};
+var lang = 'en';
+var best = 0;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function pickLang(l){
+  lang = l;
+  initAudio(); resumeAudio();
+  document.getElementById('langScr').style.display = 'none';
+  applyLang();
+  showStart();
+}
+function applyLang(){
+  var T = LANG[lang];
+  document.getElementById('hudLbl').textContent    = T.lbl;
+  document.getElementById('hint').textContent       = T.hint;
+  document.getElementById('st_sub').textContent     = T.st_sub;
+  document.getElementById('st_play').textContent    = T.st_play;
+  document.getElementById('st_lang').textContent    = T.st_lang;
+  document.getElementById('go_title').textContent   = T.go_title;
+  document.getElementById('go_sub').textContent     = T.go_sub;
+  document.getElementById('go_restart').textContent = T.go_restart;
+  document.getElementById('go_lang').textContent    = T.go_lang;
+}
+function goLang(){
+  stopMusic();
+  gameActive = false;
+  isPressing = false;
+  clearInterval(obInterval);
+  hide('hud'); hide('hint'); show('langScr',true);
+  document.getElementById('goPanel').classList.remove('vis');
+  document.getElementById('startPanel').classList.remove('vis');
+}
+function showStart(){
+  var T = LANG[lang];
+  document.getElementById('st_best').textContent = best>0 ? T.st_best+best : '';
+  document.getElementById('startPanel').classList.add('vis');
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('hint').style.opacity = '0';
+}
 
-    let score = 0;
-    let gameActive = true;
-    let isPressing = false;
+// ════════════════════════════════════════
+//  CANVAS
+// ════════════════════════════════════════
+var cv  = document.getElementById('gc');
+var ctx = cv.getContext('2d');
+function resize(){
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+  CX = cv.width  / 2;
+  CY = cv.height / 2;
+  // Danger radius = 46% of shorter side
+  DANGER_R = Math.min(cv.width, cv.height) * 0.46;
+}
+var CX, CY, DANGER_R;
+resize();
+window.addEventListener('resize', resize);
 
-    // Koptok (O'yinchi)
-    const player = {
-        angle: 0,
-        distance: 80,
-        radius: 10,
-        speed: 0.05
-    };
+// ════════════════════════════════════════
+//  AUDIO ENGINE
+// ════════════════════════════════════════
+var actx      = null;
+var musOn     = true;
+var sfxOn     = true;
+var ambTmr    = null;
+var drumTmr   = null;
+var ambIdx    = 0;
+var drumBeat  = 0;
 
-    const obstacles = [];
-    const center = { x: canvas.width / 2, y: canvas.height / 2 };
+function initAudio(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function resumeAudio(){ if(actx && actx.state==='suspended') actx.resume(); }
 
-    // Boshqaruv
-    window.addEventListener("mousedown", () => { isPressing = true; document.getElementById("msg").style.opacity = 0; });
-    window.addEventListener("mouseup", () => isPressing = false);
-    window.addEventListener("touchstart", (e) => { isPressing = true; e.preventDefault(); document.getElementById("msg").style.opacity = 0; });
-    window.addEventListener("touchend", () => isPressing = false);
+/* Core tone generator */
+function tone(freq, dur, t0, vol, type){
+  if(!actx) return;
+  t0=t0||0; vol=vol||0.1; type=type||'sine';
+  var t=actx.currentTime+t0;
+  var o=actx.createOscillator(), g=actx.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.01);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t+dur+0.05);
+}
+/* Noise burst */
+function noise(dur, vol, t0, fc, type){
+  if(!actx) return;
+  t0=t0||0; vol=vol||0.05; fc=fc||1000; type=type||'bandpass';
+  var t=actx.currentTime+t0;
+  var sz=Math.ceil(actx.sampleRate*dur);
+  var buf=actx.createBuffer(1,sz,actx.sampleRate);
+  var d=buf.getChannelData(0);
+  for(var i=0;i<sz;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(sz*.5));
+  var src=actx.createBufferSource();
+  var flt=actx.createBiquadFilter(); flt.type=type; flt.frequency.value=fc;
+  var g=actx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  src.buffer=buf; src.connect(flt); flt.connect(g); g.connect(actx.destination);
+  src.start(t); src.stop(t+dur+0.05);
+}
 
-    function createObstacle() {
-        const side = Math.random() > 0.5 ? 1 : -1;
-        const radius = Math.random() * 15 + 10;
-        const dist = side === 1 ? canvas.width : 0;
-        
-        obstacles.push({
-            x: Math.random() * canvas.width,
-            y: side === 1 ? -50 : canvas.height + 50,
-            vx: (Math.random() - 0.5) * 4,
-            vy: side === 1 ? Math.random() * 3 + 2 : -(Math.random() * 3 + 2),
-            radius: radius,
-            color: "#ff0055"
-        });
+/* ── SFX ── */
+function sfxLaunch(){
+  if(!sfxOn||!actx) return;
+  tone(220,.08,0,.07,'triangle');
+  tone(330,.07,.06,.06,'triangle');
+  tone(440,.06,.11,.05,'triangle');
+  tone(660,.05,.16,.04,'sine');
+}
+function sfxCollect(){
+  // obstacle passed — small ping
+  if(!sfxOn||!actx) return;
+  var f = 440 + (score % 20) * 26;
+  tone(f,  .05, 0,  .08,'sine');
+  tone(f*2,.04,.04,.04,'sine');
+}
+function sfxNearMiss(gap){
+  if(!sfxOn||!actx) return;
+  // gap 0-40: higher freq = more danger
+  var danger = Math.max(0, Math.min(1, 1 - gap/40));
+  if(danger < 0.3) return; // only play if quite close
+  tone(200+danger*400, .03, 0, .04+danger*.06, 'sawtooth');
+}
+function sfxHit(){
+  if(!sfxOn||!actx) return;
+  noise(.15,.35,0,250,'lowpass');
+  tone(80, .4,  0,   .3,'sawtooth');
+  tone(60, .5,  .08, .25,'sawtooth');
+  noise(.08,.2,.04,3000,'bandpass');
+}
+function sfxEscape(){
+  // flew too far
+  if(!sfxOn||!actx) return;
+  tone(880,.06,0,.12,'square');
+  tone(660,.08,.05,.1,'square');
+  tone(440,.1,.11,.08,'square');
+  noise(.18,.15,.08,2000,'bandpass');
+}
+function sfxPress(){
+  if(!sfxOn||!actx) return;
+  tone(660,.04,0,.05,'sine');
+}
+function sfxRelease(){
+  if(!sfxOn||!actx) return;
+  tone(330,.04,0,.05,'sine');
+}
+function sfxDanger(){
+  // called when player in danger zone (outer 15%)
+  if(!sfxOn||!actx) return;
+  noise(.04,.08,0,600,'bandpass');
+}
+
+/* ── MUSIC ── */
+// Arpeggio-based space ambient in Dm pentatonic
+var SCALE = [146.8, 174.6, 196, 220, 261.6, 293.7, 349.2, 392];
+var ARP   = [0,2,4,7, 7,4,2,0, 1,3,5,7, 5,3,1,0];
+var arpIdx = 0;
+var bassNotes = [73.4, 87.3, 98, 87.3];
+var bassIdx = 0;
+
+function playArp(){
+  if(!musOn||!actx) return;
+  var f = SCALE[ARP[arpIdx % ARP.length]];
+  arpIdx++;
+  tone(f*2, .15, 0, .055, 'triangle');
+  // Occasional harmony
+  if(arpIdx % 4 === 0) tone(f*3,.12,0,.025,'sine');
+  ambTmr = setTimeout(playArp, 190 - Math.min(score*1.2, 60)); // speeds up with score
+}
+function playBass(){
+  if(!musOn||!actx) return;
+  var f = bassNotes[bassIdx % bassNotes.length];
+  bassIdx++;
+  // Pad-like bass
+  var t = actx.currentTime;
+  var o=actx.createOscillator(), g=actx.createGain(), flt=actx.createBiquadFilter();
+  o.type='sawtooth'; o.frequency.value=f;
+  flt.type='lowpass'; flt.frequency.value=320; flt.Q.value=0.7;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.09,t+.08);
+  g.gain.setValueAtTime(.09,t+.6); g.gain.linearRampToValueAtTime(0,t+1.0);
+  o.connect(flt); flt.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t+1.1);
+  drumTmr = setTimeout(playBass, 760);
+}
+function playKick(){
+  if(!musOn||!actx) return;
+  var t=actx.currentTime;
+  var o=actx.createOscillator(),g=actx.createGain();
+  o.frequency.setValueAtTime(110,t); o.frequency.exponentialRampToValueAtTime(35,t+.14);
+  g.gain.setValueAtTime(.5,t); g.gain.exponentialRampToValueAtTime(.001,t+.18);
+  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+.22);
+  noise(.04,.06,0,7000,'highpass'); // hat
+  setTimeout(function(){
+    if(musOn){noise(.04,.04,0,7000,'highpass');} // off-beat hat
+  },380);
+  setTimeout(playKick, 760);
+}
+function startMusic(){
+  if(!actx) return;
+  stopMusic();
+  arpIdx=0; bassIdx=0;
+  if(musOn){ playArp(); playBass(); setTimeout(playKick,200); }
+}
+function stopMusic(){
+  clearTimeout(ambTmr); clearTimeout(drumTmr);
+  ambTmr=null; drumTmr=null;
+}
+function toggleMus(){
+  musOn=!musOn;
+  var b=document.getElementById('btnMus');
+  b.classList.toggle('on',musOn);
+  if(musOn){ initAudio(); resumeAudio(); if(gameActive) startMusic(); }
+  else stopMusic();
+}
+function toggleSfx(){
+  sfxOn=!sfxOn;
+  document.getElementById('btnSfx').classList.toggle('on',sfxOn);
+}
+
+// ════════════════════════════════════════
+//  GAME STATE
+// ════════════════════════════════════════
+var score      = 0;
+var gameActive = false;
+var isPressing = false;
+var obInterval = null;
+var lastScore  = 0;      // for scoring SFX debounce
+var dangerTime = 0;      // frames spent near danger zone
+
+// Player (orbiting ball)
+var pl = { angle:0, dist:90, radius:11, speed:0.048 };
+
+// Black hole
+var BH_R = 34;
+var MIN_DIST = BH_R + 20;
+
+var obstacles  = [];
+var particles  = [];
+var stars      = [];
+
+// Pre-generate stars
+(function(){
+  for(var i=0;i<220;i++){
+    stars.push({
+      x: Math.random()*3000 - 1500,
+      y: Math.random()*3000 - 1500,
+      r: Math.random()*1.8 + .2,
+      o: Math.random()*.65 + .2,
+      tw: Math.random()*Math.PI*2  // twinkle phase
+    });
+  }
+})();
+var starPhase = 0;
+
+// ════════════════════════════════════════
+//  INPUT
+// ════════════════════════════════════════
+var lastWasPress = false;
+window.addEventListener('mousedown', function(e){
+  if(!gameActive) return;
+  if(!isPressing){ sfxPress(); }
+  isPressing = true;
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('mouseup', function(){
+  if(!gameActive) return;
+  if(isPressing){ sfxRelease(); }
+  isPressing = false;
+});
+window.addEventListener('touchstart', function(e){
+  if(!gameActive) return;
+  if(!isPressing){ sfxPress(); }
+  isPressing = true;
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('touchend', function(e){
+  if(!gameActive) return;
+  if(isPressing){ sfxRelease(); }
+  isPressing = false;
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('touchcancel', function(){
+  isPressing = false;
+});
+
+// ════════════════════════════════════════
+//  OBSTACLES
+// ════════════════════════════════════════
+function spawnOb(){
+  if(!gameActive) return;
+  // Asl o'yin: faqat yuqori/pastdan, vx=(random-0.5)*4, vy=2..5
+  var side = Math.random() > 0.5 ? 1 : -1;
+  obstacles.push({
+    x:  Math.random() * cv.width,
+    y:  side === 1 ? -50 : cv.height + 50,
+    vx: (Math.random() - 0.5) * 4,
+    vy: side === 1 ? Math.random() * 3 + 2 : -(Math.random() * 3 + 2),
+    radius: Math.random() * 15 + 10,
+    color: '#ff0055',
+    age: 0
+  });
+}
+
+// ════════════════════════════════════════
+//  PARTICLES
+// ════════════════════════════════════════
+function burst(x, y, col, n){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2, s=Math.random()*5+1;
+    particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:Math.random()*3+.8,col:col,life:1});
+  }
+}
+
+// ════════════════════════════════════════
+//  START / RESTART / GAME OVER
+// ════════════════════════════════════════
+function startGame(){
+  initAudio(); resumeAudio();
+  document.getElementById('startPanel').classList.remove('vis');
+  document.getElementById('goPanel').classList.remove('vis');
+  document.getElementById('hud').style.display = 'flex';
+
+  // Show hint briefly
+  var hel = document.getElementById('hint');
+  hel.style.opacity='1'; hel.style.display='block';
+  setTimeout(function(){ hel.style.opacity='0'; },3200);
+  setTimeout(function(){ hel.style.display='none'; },4000);
+
+  score=0; gameActive=true; isPressing=false;
+  pl.angle=0; pl.dist=90; pl.speed=0.048;
+  obstacles.length=0; particles.length=0;
+  dangerTime=0;
+  document.getElementById('hudNum').textContent='0';
+
+  clearInterval(obInterval);
+  // Dynamic spawn interval: faster as score increases
+  var spawnMs = 850;
+  obInterval = setInterval(function(){
+    if(!gameActive){ clearInterval(obInterval); return; }
+    spawnOb();
+    spawnMs = Math.max(380, 850 - score * 8);
+    // Update speed
+    pl.speed = 0.048 + score * 0.0006;
+  }, spawnMs);
+
+  sfxLaunch();
+  if(musOn) startMusic();
+}
+function restartGame(){
+  stopMusic();
+  startGame();
+}
+function triggerGameOver(reason){
+  if(!gameActive) return;
+  gameActive=false; isPressing=false;
+  clearInterval(obInterval);
+  stopMusic();
+
+  if(reason==='hit')    sfxHit();
+  else if(reason==='out') sfxEscape();
+
+  if(score>best) best=score;
+
+  var T=LANG[lang];
+  document.getElementById('go_score').textContent = T.go_score + score;
+  document.getElementById('go_best').textContent  = T.go_best  + best;
+  document.getElementById('goPanel').classList.add('vis');
+  document.getElementById('hud').style.display='none';
+}
+
+// ════════════════════════════════════════
+//  SHOW / HIDE HELPERS
+// ════════════════════════════════════════
+function show(id,full){
+  var el=document.getElementById(id);
+  el.style.display = full ? 'flex' : '';
+}
+function hide(id){
+  document.getElementById(id).style.display='none';
+}
+
+// ════════════════════════════════════════
+//  GAME LOOP
+// ════════════════════════════════════════
+var RAF = null;
+function loop(){
+  RAF = requestAnimationFrame(loop);
+  update();
+  render();
+}
+
+function update(){
+  if(!gameActive) return;
+
+  // ── Player movement ──
+  pl.angle += pl.speed;
+  if(isPressing){
+    pl.dist += 4.0;
+  } else {
+    pl.dist -= 2.8;
+  }
+  // Clamp minimum (can't merge with black hole)
+  if(pl.dist < MIN_DIST) pl.dist = MIN_DIST;
+
+  // ── DANGER ZONE: out-of-bounds check ──
+  if(pl.dist >= DANGER_R){
+    burst(CX + Math.cos(pl.angle)*pl.dist, CY + Math.sin(pl.angle)*pl.dist, '#ff2244', 20);
+    triggerGameOver('out');
+    return;
+  }
+
+  // Proximity warning SFX (outer 20% of play area)
+  var pct = (pl.dist - MIN_DIST) / (DANGER_R - MIN_DIST); // 0..1
+  if(pct > 0.82){
+    dangerTime++;
+    if(dangerTime % 18 === 0) sfxDanger();
+  } else {
+    dangerTime = 0;
+  }
+
+  var px = CX + Math.cos(pl.angle) * pl.dist;
+  var py = CY + Math.sin(pl.angle) * pl.dist;
+
+  // ── Obstacles ──
+  for(var i=obstacles.length-1; i>=0; i--){
+    var ob = obstacles[i];
+    ob.x += ob.vx;
+    ob.y += ob.vy;
+    ob.age++;
+
+    var dx = px - ob.x, dy = py - ob.y;
+    var dist = Math.sqrt(dx*dx+dy*dy);
+    var gap  = dist - pl.radius - ob.radius;
+
+    // Collision
+    if(gap < 0){
+      burst(px, py, '#00f3ff', 16);
+      burst(ob.x, ob.y, ob.color, 12);
+      triggerGameOver('hit');
+      return;
     }
+    // Near-miss SFX
+    sfxNearMiss(gap);
 
-    setInterval(() => { if(gameActive) createObstacle(); }, 800);
-
-    function update() {
-        if (!gameActive) return;
-
-        // O'yinchi harakati
-        player.angle += player.speed;
-        
-        if (isPressing) {
-            player.distance += 4; // Tashqariga uchish
-        } else {
-            player.distance -= 3; // Markazga tortilish
-        }
-
-        // Chegaralar
-        if (player.distance < 40) player.distance = 40; // Markazga juda yaqin
-        if (player.distance > canvas.width / 2) { // Juda uzoqqa ketib qolish
-            gameOver();
-        }
-
-        const px = center.x + Math.cos(player.angle) * player.distance;
-        const py = center.y + Math.sin(player.angle) * player.distance;
-
-        // Kometalar harakati
-        obstacles.forEach((ob, index) => {
-            ob.x += ob.vx;
-            ob.y += ob.vy;
-
-            // To'qnashuvni tekshirish
-            const dx = px - ob.x;
-            const dy = py - ob.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < player.radius + ob.radius) {
-                gameOver();
-            }
-
-            // Ekrandan chiqib ketganlarni o'chirish
-            if (ob.y > canvas.height + 100 || ob.y < -100) {
-                obstacles.splice(index, 1);
-                score++;
-                scoreEl.innerText = score;
-            }
-        });
+    // Asl o'yin: faqat y dan chiqsa ball beriladi (x dan chiqsa — yo'qoladi, ball yo'q)
+    if(ob.y > cv.height + 100 || ob.y < -100){
+      obstacles.splice(i,1);
+      score++;
+      document.getElementById('hudNum').textContent = score;
+      sfxCollect();
+    } else if(ob.x < -100 || ob.x > cv.width + 100){
+      obstacles.splice(i,1); // x dan chiqsa o'chir, ball yo'q
     }
+  }
 
-    function draw() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // "Motion blur" effekti
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // ── Particles ──
+  for(var j=particles.length-1; j>=0; j--){
+    var p=particles[j];
+    p.x+=p.vx; p.y+=p.vy;
+    p.vx*=0.91; p.vy*=0.91;
+    p.life-=0.038;
+    if(p.life<=0) particles.splice(j,1);
+  }
+  starPhase += 0.012;
+}
 
-        // Markaziy Qora Tuynuk
-        ctx.beginPath();
-        ctx.arc(center.x, center.y, 35, 0, Math.PI * 2);
-        ctx.shadowBlur = 20; ctx.shadowColor = "#7000ff";
-        ctx.fillStyle = "#1a0033"; ctx.fill();
-        ctx.strokeStyle = "#7000ff"; ctx.lineWidth = 2; ctx.stroke();
+// ════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════
+function render(){
+  var W=cv.width, H=cv.height;
 
-        // O'yinchi (Sayyora)
-        const px = center.x + Math.cos(player.angle) * player.distance;
-        const py = center.y + Math.sin(player.angle) * player.distance;
+  // Motion-blur trail
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(0,0,W,H);
 
-        ctx.beginPath();
-        ctx.arc(px, py, player.radius, 0, Math.PI * 2);
-        ctx.shadowBlur = 15; ctx.shadowColor = "#00f3ff";
-        ctx.fillStyle = "#00f3ff"; ctx.fill();
+  // ── Stars ──
+  ctx.save();
+  var pax = Math.cos(pl.angle)*10, pay = Math.sin(pl.angle)*10;
+  stars.forEach(function(s){
+    var twinkle = s.o * (0.6 + 0.4 * Math.sin(starPhase + s.tw));
+    var sx = ((s.x + CX + pax*.25) % W + W) % W;
+    var sy = ((s.y + CY + pay*.25) % H + H) % H;
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,'+twinkle.toFixed(2)+')';
+    ctx.fill();
+  });
+  ctx.restore();
 
-        // To'siqlar
-        obstacles.forEach(ob => {
-            ctx.beginPath();
-            ctx.arc(ob.x, ob.y, ob.radius, 0, Math.PI * 2);
-            ctx.shadowBlur = 10; ctx.shadowColor = ob.color;
-            ctx.fillStyle = ob.color; ctx.fill();
-        });
+  // ── DANGER ZONE (red boundary circle) ──
+  var pct = gameActive ? (pl.dist - MIN_DIST) / (DANGER_R - MIN_DIST) : 0;
+  // pct: 0=near center, 1=at danger edge
+  var baseAlpha = 0.35;                          // always visible
+  var pulseAlpha = baseAlpha + pct * pct * 0.55; // gets brighter near edge
 
-        ctx.shadowBlur = 0;
-        requestAnimationFrame(() => {
-            update();
-            draw();
-        });
+  ctx.save();
+  // Qizil haze FAQAT tashqarida, ichi qora (asl o'yin fonidek)
+  ctx.beginPath();
+  ctx.rect(0, 0, cv.width, cv.height);
+  ctx.arc(CX, CY, DANGER_R, 0, Math.PI*2, true);
+  ctx.clip();
+  var hazGrad = ctx.createRadialGradient(CX,CY,DANGER_R, CX,CY,DANGER_R+36);
+  hazGrad.addColorStop(0, 'rgba(255,20,50,'+( pulseAlpha*.32).toFixed(3)+')');
+  hazGrad.addColorStop(1, 'rgba(255,20,50,0)');
+  ctx.beginPath();
+  ctx.arc(CX, CY, DANGER_R+36, 0, Math.PI*2);
+  ctx.fillStyle = hazGrad;
+  ctx.fill();
+
+  // Dashed red ring
+  ctx.beginPath();
+  ctx.arc(CX, CY, DANGER_R, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,30,55,' + pulseAlpha.toFixed(2) + ')';
+  ctx.lineWidth    = 2.5;
+  ctx.setLineDash([20, 10]);
+  ctx.lineDashOffset = -starPhase * 14; // slowly animates
+  ctx.shadowBlur   = 12 + pct * 16;
+  ctx.shadowColor  = 'rgba(255,30,55,0.6)';
+  ctx.stroke();
+
+  // Solid thin inner ring
+  ctx.beginPath();
+  ctx.arc(CX, CY, DANGER_R - 7, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,60,80,'+(pulseAlpha*.35).toFixed(3)+')';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([]);
+  ctx.shadowBlur  = 0;
+  ctx.stroke();
+
+  // "!" warning ticks at 4 cardinal points
+  ctx.fillStyle = 'rgba(255,40,60,'+(pulseAlpha*.9).toFixed(3)+')';
+  ctx.font = 'bold '+(9 + pct*5|0)+'px Orbitron,monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  [[0,-DANGER_R],[DANGER_R,0],[0,DANGER_R],[-DANGER_R,0]].forEach(function(pt){
+    ctx.fillText('!', CX+pt[0], CY+pt[1]);
+  });
+  ctx.restore();
+
+  // ── Orbit guide ring ──
+  ctx.save();
+  var orbitR = gameActive ? pl.dist : 90;
+  ctx.beginPath();
+  ctx.arc(CX, CY, orbitR, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(0,243,255,0.07)';
+  ctx.lineWidth   = 1;
+  ctx.setLineDash([5, 10]);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Black hole ──
+  ctx.save();
+  // Accretion rings
+  for(var r=0;r<4;r++){
+    ctx.beginPath();
+    ctx.arc(CX, CY, BH_R + 6 + r*8, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(112,0,255,'+(0.14-r*.03)+')';
+    ctx.lineWidth   = 3-r*.5;
+    ctx.setLineDash([]);
+    ctx.shadowBlur  = 16-r*3;
+    ctx.shadowColor = '#7000ff';
+    ctx.stroke();
+  }
+  // Core
+  var bhg = ctx.createRadialGradient(CX,CY,0, CX,CY,BH_R);
+  bhg.addColorStop(0,'#06001a');
+  bhg.addColorStop(.6,'#180035');
+  bhg.addColorStop(1,'rgba(65,0,130,.7)');
+  ctx.beginPath();
+  ctx.arc(CX, CY, BH_R, 0, Math.PI*2);
+  ctx.shadowBlur=28; ctx.shadowColor='#7000ff';
+  ctx.fillStyle=bhg; ctx.fill();
+  // Spinning spokes
+  for(var sp=0;sp<6;sp++){
+    var sa = starPhase*2.8 + sp*(Math.PI/3);
+    ctx.beginPath();
+    ctx.moveTo(CX+Math.cos(sa)*BH_R*.3, CY+Math.sin(sa)*BH_R*.3);
+    ctx.lineTo(CX+Math.cos(sa)*BH_R*.9, CY+Math.sin(sa)*BH_R*.9);
+    ctx.strokeStyle='rgba(100,0,220,.4)';
+    ctx.lineWidth=1.5; ctx.shadowBlur=0; ctx.stroke();
+  }
+  ctx.restore();
+
+  // ── Obstacles ──
+  ctx.save();
+  obstacles.forEach(function(ob){
+    // Asl o'yin: oddiy to'q shar, glow va highlight yo'q
+    ctx.beginPath();
+    ctx.arc(ob.x, ob.y, ob.radius, 0, Math.PI*2);
+    ctx.shadowBlur=10; ctx.shadowColor=ob.color;
+    ctx.fillStyle=ob.color; ctx.fill();
+    ctx.shadowBlur=0;
+  });
+  ctx.restore();
+
+  // ── Particles ──
+  ctx.save();
+  particles.forEach(function(p){
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(.1, p.r*p.life), 0, Math.PI*2);
+    ctx.fillStyle = p.col;
+    ctx.globalAlpha = p.life;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // ── Player ball ──
+  if(gameActive || particles.length > 0){
+    var px = CX + Math.cos(pl.angle) * pl.dist;
+    var py = CY + Math.sin(pl.angle) * pl.dist;
+
+    // Tail trail
+    ctx.save();
+    for(var tr=1; tr<=7; tr++){
+      var ta  = pl.angle - tr*.1;
+      var td  = pl.dist  - tr*1.2;
+      if(td < MIN_DIST) break;
+      var tx  = CX + Math.cos(ta)*td;
+      var ty  = CY + Math.sin(ta)*td;
+      var tr_ = pl.radius * (1 - tr*.12);
+      ctx.beginPath();
+      ctx.arc(tx, ty, Math.max(.1,tr_), 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,243,255,'+(0.28-tr*.035).toFixed(3)+')';
+      ctx.fill();
     }
+    ctx.restore();
 
-    function gameOver() {
-        gameActive = false;
-        alert("GAME OVER! Your Galaxy Score: " + score);
-        location.reload();
-    }
+    // Outer glow ring
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, pl.radius+7, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(0,243,255,0.22)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
 
-    draw();
+    // Main sphere
+    ctx.save();
+    var plg = ctx.createRadialGradient(px-3,py-3,1, px,py,pl.radius);
+    plg.addColorStop(0,'#ffffff');
+    plg.addColorStop(.35,'#88faff');
+    plg.addColorStop(1,'#0099aa');
+    ctx.beginPath();
+    ctx.arc(px, py, pl.radius, 0, Math.PI*2);
+    ctx.shadowBlur=22; ctx.shadowColor='#00f3ff';
+    ctx.fillStyle=plg; ctx.fill();
+    ctx.restore();
+  }
+  ctx.shadowBlur = 0;
+}
+
+// ════════════════════════════════════════
+//  BOOT: start render loop immediately
+//  (shows starfield + danger ring on panels)
+// ════════════════════════════════════════
+loop();
 </script>
 </body>
 </html>
