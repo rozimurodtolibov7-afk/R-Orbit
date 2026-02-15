@@ -55,7 +55,7 @@ canvas{position:fixed;top:0;left:0;display:block;}
 
 /* ─── HUD ─── */
 #hud{
-  position:fixed;top:0;left:0;right:0;z-index:200;
+  position:fixed;top:0;left:0;right:0;z-index:500;
   display:none;justify-content:space-between;align-items:flex-start;
   padding:14px 16px 0;pointer-events:none;
 }
@@ -68,7 +68,7 @@ canvas{position:fixed;top:0;left:0;display:block;}
   font-family:'Orbitron',monospace;font-size:clamp(1.4rem,5vw,2rem);font-weight:900;
   color:#00f3ff;text-shadow:0 0 14px #00f3ff;letter-spacing:2px;line-height:1.1;
 }
-.hud-right{display:flex;gap:7px;pointer-events:all;}
+.hud-right{display:flex;gap:7px;pointer-events:all;position:relative;z-index:600;}
 .hud-btn{
   width:36px;height:36px;border-radius:50%;
   background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.15);
@@ -76,6 +76,8 @@ canvas{position:fixed;top:0;left:0;display:block;}
   cursor:pointer;transition:all .2s;
   display:flex;align-items:center;justify-content:center;
   font-family:'Orbitron',monospace;letter-spacing:0;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  pointer-events:all;position:relative;z-index:600;
 }
 .hud-btn:hover{border-color:#00f3ff;color:#00f3ff;}
 .hud-btn.on{border-color:rgba(0,243,255,.6);color:#00f3ff;background:rgba(0,243,255,.1);box-shadow:0 0 10px rgba(0,243,255,.25);}
@@ -121,13 +123,15 @@ canvas{position:fixed;top:0;left:0;display:block;}
 
 
 /* ─── SPEED BUTTONS ─── */
-.speed-row{display:flex;gap:5px;align-items:center;}
+.speed-row{display:flex;gap:5px;align-items:center;position:relative;z-index:600;pointer-events:all;}
 .spd-btn{
   background:rgba(0,243,255,.06);border:1px solid rgba(0,243,255,.18);
   color:rgba(0,243,255,.55);padding:0;width:34px;height:34px;
   font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;
   letter-spacing:0;cursor:pointer;transition:all .2s;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  pointer-events:all;position:relative;z-index:600;
 }
 .spd-btn:hover{border-color:#00f3ff;color:#00f3ff;}
 .spd-btn.sel{background:rgba(0,243,255,.22);border-color:#00f3ff;color:#00f3ff;box-shadow:0 0 10px rgba(0,243,255,.3);}
@@ -507,23 +511,28 @@ var starPhase = 0;
 var lastWasPress = false;
 window.addEventListener('mousedown', function(e){
   if(!gameActive) return;
+  if(e.target && e.target.closest('button')) return;
   if(!isPressing){ sfxPress(); }
   isPressing = true;
   e.preventDefault();
 },{passive:false});
-window.addEventListener('mouseup', function(){
+window.addEventListener('mouseup', function(e){
   if(!gameActive) return;
+  if(e.target && e.target.closest('button')) return;
   if(isPressing){ sfxRelease(); }
   isPressing = false;
 });
 window.addEventListener('touchstart', function(e){
   if(!gameActive) return;
+  // Tugma bosilsa — o'tkazib yubor, tugma o'zi ishlaydi
+  if(e.target && e.target.closest('button')) return;
   if(!isPressing){ sfxPress(); }
   isPressing = true;
   e.preventDefault();
 },{passive:false});
 window.addEventListener('touchend', function(e){
   if(!gameActive) return;
+  if(e.target && e.target.closest('button')) return;
   if(isPressing){ sfxRelease(); }
   isPressing = false;
   e.preventDefault();
