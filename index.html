@@ -665,9 +665,9 @@ function update(){
   // ── Player movement ──
   pl.angle += pl.speed;
   if(isPressing){
-    pl.dist += 4.0;
+    pl.dist += 2.2;  // tashqariga kuch pasaytirildi (4.0 -> 2.2)
   } else {
-    pl.dist -= 2.8;
+    pl.dist -= 2.5;  // ichkariga tortish
   }
   // Clamp minimum (can't merge with black hole)
   if(pl.dist < MIN_DIST) pl.dist = MIN_DIST;
