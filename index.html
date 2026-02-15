@@ -119,6 +119,18 @@ canvas{position:fixed;top:0;left:0;display:block;}
 .action-btn.dim{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.45);}
 .action-btn.dim:hover{border-color:rgba(255,255,255,.45);color:#fff;}
 
+
+/* ─── SPEED BUTTONS ─── */
+.speed-row{display:flex;gap:5px;align-items:center;}
+.spd-btn{
+  background:rgba(0,243,255,.06);border:1px solid rgba(0,243,255,.18);
+  color:rgba(0,243,255,.55);padding:0;width:34px;height:34px;
+  font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;
+  letter-spacing:0;cursor:pointer;transition:all .2s;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.spd-btn:hover{border-color:#00f3ff;color:#00f3ff;}
+.spd-btn.sel{background:rgba(0,243,255,.22);border-color:#00f3ff;color:#00f3ff;box-shadow:0 0 10px rgba(0,243,255,.3);}
 /* ─── HINT ─── */
 #hint{
   position:fixed;bottom:28px;left:0;right:0;text-align:center;z-index:210;
@@ -152,6 +164,11 @@ canvas{position:fixed;top:0;left:0;display:block;}
     <div class="hud-num" id="hudNum">0</div>
   </div>
   <div class="hud-right">
+    <div class="speed-row">
+      <button class="spd-btn" id="spd05" onclick="setSpeed(0.5)">0.5x</button>
+      <button class="spd-btn sel" id="spd1" onclick="setSpeed(1)">1x</button>
+      <button class="spd-btn" id="spd2" onclick="setSpeed(2)">2x</button>
+    </div>
     <button class="hud-btn on" id="btnMus" onclick="toggleMus()">MUS</button>
     <button class="hud-btn on" id="btnSfx" onclick="toggleSfx()">SFX</button>
     <button class="hud-btn" id="btnLang" onclick="goLang()">&#127760;</button>
@@ -455,6 +472,7 @@ var score      = 0;
 var gameActive = false;
 var isPressing = false;
 var obInterval = null;
+var speedMult = 1; // 0.5x sekin, 1x normal, 2x tez
 var lastScore  = 0;      // for scoring SFX debounce
 var dangerTime = 0;      // frames spent near danger zone
 
@@ -524,8 +542,8 @@ function spawnOb(){
   obstacles.push({
     x:  Math.random() * cv.width,
     y:  side === 1 ? -50 : cv.height + 50,
-    vx: (Math.random() - 0.5) * 4,
-    vy: side === 1 ? Math.random() * 3 + 2 : -(Math.random() * 3 + 2),
+    vx: (Math.random() - 0.5) * 4 * speedMult,
+    vy: side === 1 ? (Math.random() * 3 + 2) * speedMult : -(Math.random() * 3 + 2) * speedMult,
     radius: Math.random() * 15 + 10,
     color: '#ff0055',
     age: 0
@@ -545,6 +563,18 @@ function burst(x, y, col, n){
 // ════════════════════════════════════════
 //  START / RESTART / GAME OVER
 // ════════════════════════════════════════
+function setSpeed(mult){
+  speedMult = mult;
+  ['05','1','2'].forEach(function(k){
+    document.getElementById('spd'+k).classList.remove('sel');
+  });
+  var key = mult === 0.5 ? '05' : mult === 2 ? '2' : '1';
+  document.getElementById('spd'+key).classList.add('sel');
+  // If game is running, update live obstacle speeds
+  if(gameActive){
+    pl.speed = (0.048 + score * 0.0006) * speedMult;
+  }
+}
 function startGame(){
   initAudio(); resumeAudio();
   document.getElementById('startPanel').classList.remove('vis');
@@ -558,7 +588,7 @@ function startGame(){
   setTimeout(function(){ hel.style.display='none'; },4000);
 
   score=0; gameActive=true; isPressing=false;
-  pl.angle=0; pl.dist=90; pl.speed=0.048;
+  pl.angle=0; pl.dist=90; pl.speed=0.048 * speedMult;
   obstacles.length=0; particles.length=0;
   dangerTime=0;
   document.getElementById('hudNum').textContent='0';
@@ -571,7 +601,7 @@ function startGame(){
     spawnOb();
     spawnMs = Math.max(380, 850 - score * 8);
     // Update speed
-    pl.speed = 0.048 + score * 0.0006;
+    pl.speed = (0.048 + score * 0.0006) * speedMult;
   }, spawnMs);
 
   sfxLaunch();
