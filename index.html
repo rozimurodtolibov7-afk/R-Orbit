@@ -481,7 +481,7 @@ var lastScore  = 0;      // for scoring SFX debounce
 var dangerTime = 0;      // frames spent near danger zone
 
 // Player (orbiting ball)
-var pl = { angle:0, dist:90, radius:11, speed:0.048 };
+var pl = { angle:0, dist:90, radius:10, speed:0.05 };
 
 // Black hole
 var BH_R = 34;
@@ -581,7 +581,7 @@ function setSpeed(mult){
   document.getElementById('spd'+key).classList.add('sel');
   // If game is running, update live obstacle speeds
   if(gameActive){
-    pl.speed = (0.048 + score * 0.0006) * speedMult;
+    pl.speed = (0.05 + score * 0.0006) * speedMult;
   }
 }
 function startGame(){
@@ -597,7 +597,7 @@ function startGame(){
   setTimeout(function(){ hel.style.display='none'; },4000);
 
   score=0; gameActive=true; isPressing=false;
-  pl.angle=0; pl.dist=90; pl.speed=0.048 * speedMult;
+  pl.angle=0; pl.dist=90; pl.speed=0.05 * speedMult;
   obstacles.length=0; particles.length=0;
   dangerTime=0;
   document.getElementById('hudNum').textContent='0';
@@ -610,7 +610,7 @@ function startGame(){
     spawnOb();
     spawnMs = Math.max(380, 850 - score * 8);
     // Update speed
-    pl.speed = (0.048 + score * 0.0006) * speedMult;
+    pl.speed = (0.05 + score * 0.0006) * speedMult;
   }, spawnMs);
 
   sfxLaunch();
@@ -665,9 +665,9 @@ function update(){
   // ── Player movement ──
   pl.angle += pl.speed;
   if(isPressing){
-    pl.dist += 2.2;  // tashqariga kuch pasaytirildi (4.0 -> 2.2)
+    pl.dist += 4;
   } else {
-    pl.dist -= 2.5;  // ichkariga tortish
+    pl.dist -= 3;
   }
   // Clamp minimum (can't merge with black hole)
   if(pl.dist < MIN_DIST) pl.dist = MIN_DIST;
@@ -807,15 +807,6 @@ function render(){
   });
   ctx.restore();
 
-  // ── Orbit guide ring ──
-  ctx.save();
-  var orbitR = gameActive ? pl.dist : 90;
-  ctx.beginPath();
-  ctx.arc(CX, CY, orbitR, 0, Math.PI*2);
-  ctx.strokeStyle = 'rgba(0,243,255,0.07)';
-  ctx.lineWidth   = 1;
-  ctx.setLineDash([5, 10]);
-  ctx.stroke();
   ctx.restore();
 
   // ── Black hole ──
@@ -880,42 +871,11 @@ function render(){
     var px = CX + Math.cos(pl.angle) * pl.dist;
     var py = CY + Math.sin(pl.angle) * pl.dist;
 
-    // Tail trail
-    ctx.save();
-    for(var tr=1; tr<=7; tr++){
-      var ta  = pl.angle - tr*.1;
-      var td  = pl.dist  - tr*1.2;
-      if(td < MIN_DIST) break;
-      var tx  = CX + Math.cos(ta)*td;
-      var ty  = CY + Math.sin(ta)*td;
-      var tr_ = pl.radius * (1 - tr*.12);
-      ctx.beginPath();
-      ctx.arc(tx, ty, Math.max(.1,tr_), 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(0,243,255,'+(0.28-tr*.035).toFixed(3)+')';
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // Outer glow ring
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(px, py, pl.radius+7, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(0,243,255,0.22)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-
-    // Main sphere
-    ctx.save();
-    var plg = ctx.createRadialGradient(px-3,py-3,1, px,py,pl.radius);
-    plg.addColorStop(0,'#ffffff');
-    plg.addColorStop(.35,'#88faff');
-    plg.addColorStop(1,'#0099aa');
+    // Asl o'yin: oddiy #00f3ff shar
     ctx.beginPath();
     ctx.arc(px, py, pl.radius, 0, Math.PI*2);
-    ctx.shadowBlur=22; ctx.shadowColor='#00f3ff';
-    ctx.fillStyle=plg; ctx.fill();
-    ctx.restore();
+    ctx.shadowBlur = 15; ctx.shadowColor = '#00f3ff';
+    ctx.fillStyle = '#00f3ff'; ctx.fill();
   }
   ctx.shadowBlur = 0;
 }
